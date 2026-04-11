@@ -115,7 +115,7 @@ function getChartTheme() {
         return trimmed;
     }
     return {
-        primary: resolveCssVar(styles.getPropertyValue('--mw-primary')) || '#6750a4',
+        primary: resolveCssVar(styles.getPropertyValue('--mw-primary')) || '#0f766e',
         secondary: resolveCssVar(styles.getPropertyValue('--mdui-color-secondary')) || '#4f8ef7',
         border: resolveCssVar(styles.getPropertyValue('--mw-border')) || '#e2e8f0',
         muted: resolveCssVar(styles.getPropertyValue('--mw-muted')) || '#64748b',

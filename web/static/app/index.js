@@ -93,7 +93,7 @@ function getChartTheme() {
         return trimmed;
     }
     return {
-        primary: resolveCssVar(styles.getPropertyValue('--mw-primary')) || '#6750a4',
+        primary: resolveCssVar(styles.getPropertyValue('--mw-primary')) || '#0f766e',
         secondary: resolveCssVar(styles.getPropertyValue('--mdui-color-secondary')) || '#4f8ef7',
         border: resolveCssVar(styles.getPropertyValue('--mw-border')) || '#e2e8f0',
         muted: resolveCssVar(styles.getPropertyValue('--mw-muted')) || '#64748b',
@@ -337,7 +337,7 @@ function getDiskInfo() {
                 '<mdui-linear-progress max="100" value="' + usagePercent + '" style="--mdui-color-primary: ' + LoadColor + ';"></mdui-linear-progress>' +
                 '</div>' +
                 '<div class="mw-stat-value mask" style="color:' + LoadColor + '"' + inodes + '><span>' + usagePercent + '</span>%</div>' +
-                '<h4 class="c5 f15">' + rdata[i].size[1] + '/' + rdata[i].size[0] + '</h4>' +
+                '<div class="mw-stat-footer">' + rdata[i].size[1] + '/' + rdata[i].size[0] + '</div>' +
                 '</li>'
             $("#systemInfoList").append(dBody);
         }

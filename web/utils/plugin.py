@@ -100,19 +100,27 @@ class plugin(object):
 
 
     def getIndexList(self):
-        indexList = thisdb.getOptionByJson('display_index', default=[])
-        if not indexList:
-            installed_plugins, _ = self.getAllPluginList(type='-1', keyword=None, page=1, size=12)
-            for plugin in installed_plugins:
+        def build_index_list(plugins):
+            index_list = []
+            for plugin in plugins:
                 version = plugin.get('setup_version')
                 if not version:
-                    if isinstance(plugin.get('versions'), list):
-                        if plugin['versions']:
-                            version = plugin['versions'][0]
+                    versions = plugin.get('versions')
+                    if isinstance(versions, list):
+                        if versions:
+                            version = versions[0]
                     else:
-                        version = plugin.get('versions')
+                        version = versions
                 if version:
-                    indexList.append('{0}-{1}'.format(plugin['name'], version))
+                    index_list.append('{0}-{1}'.format(plugin['name'], version))
+            return index_list
+
+        indexList = thisdb.getOptionByJson('display_index', default=[])
+        if not isinstance(indexList, list):
+            indexList = []
+        if not indexList:
+            installed_plugins, _ = self.getAllPluginList(type='-1', keyword=None, page=1, size=12)
+            indexList = build_index_list(installed_plugins)
             if indexList:
                 thisdb.setOption('display_index', json.dumps(indexList))
         plist = []
@@ -144,6 +152,14 @@ class plugin(object):
 
                 except Exception as e:
                     print('getIndexList:', mw.getTracebackInfo())
+
+        if not plist:
+            installed_plugins, _ = self.getAllPluginList(type='-1', keyword=None, page=1, size=12)
+            if installed_plugins:
+                plist = installed_plugins
+                refreshed_index = build_index_list(installed_plugins)
+                if refreshed_index:
+                    thisdb.setOption('display_index', json.dumps(refreshed_index))
 
         plist = self.checkStatusMThreadsByCache(plist)
         return mw.returnData(True, 'ok', plist)

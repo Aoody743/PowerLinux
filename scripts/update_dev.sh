@@ -16,6 +16,9 @@ WORKING='[\033[34m*\033[0m]'
 
 # LANG=en_US.UTF-8
 is64bit=`getconf LONG_BIT`
+REPO_OWNER="AndyXeCM"
+REPO_NAME="PowerLinux"
+REPO_BRANCH="main"
 
 startTime=`date +%s`
 
@@ -214,19 +217,16 @@ if [ -f /tmp/dev.tar.gz ];then
 	rm -rf /tmp/dev.tar.gz
 fi
 
-if [ -d /tmp/mdserver-web-dev ];then
-	rm -rf /tmp/mdserver-web-dev
-fi
+echo "update PowerLinux dev code start"
 
-echo "update mdserver-web dev code start"
-
-curl --insecure -sSLo /tmp/dev.tar.gz ${HTTP_PREFIX}github.com/midoks/mdserver-web/archive/refs/heads/dev.tar.gz
+curl --insecure -sSLo /tmp/dev.tar.gz ${HTTP_PREFIX}github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/${REPO_BRANCH}.tar.gz
+TARBALL_DIR=$(tar -tf /tmp/dev.tar.gz | head -1 | cut -d/ -f1)
 cd /tmp && tar -zxvf /tmp/dev.tar.gz
-$CP_CMD -rf /tmp/mdserver-web-dev/* /www/server/mdserver-web
+$CP_CMD -rf /tmp/${TARBALL_DIR}/* /www/server/mdserver-web
 rm -rf /tmp/dev.tar.gz
-rm -rf /tmp/mdserver-web-dev
+rm -rf /tmp/${TARBALL_DIR}
 
-echo "update mdserver-web dev code end"
+echo "update PowerLinux dev code end"
 
 
 #pip uninstall public

@@ -16,6 +16,9 @@ WORKING='[\033[34m*\033[0m]'
 
 # LANG=en_US.UTF-8
 is64bit=`getconf LONG_BIT`
+REPO_OWNER="AndyXeCM"
+REPO_NAME="PowerLinux"
+REPO_BRANCH="main"
 
 
 if [ -f /www/server/mdserver-web/tools.py ];then
@@ -25,8 +28,8 @@ if [ -f /www/server/mdserver-web/tools.py ];then
 	exit 0
 fi
 
-echo -e "您正在安装的是\033[31mmdserver-web测试版\033[0m，非开发测试用途请使用正式版 install.sh ！" 
-echo -e "You are installing\033[31m mdserver-web dev version\033[0m, normally use install.sh for production.\n" 
+echo -e "您正在安装的是\033[31mPowerLinux测试版\033[0m，非开发测试用途请使用正式版 install.sh ！"
+echo -e "You are installing\033[31m PowerLinux dev version\033[0m, normally use install.sh for production.\n"
 sleep 1
 
 LOG_FILE=/var/log/mw-install.log
@@ -153,7 +156,7 @@ if [ "$LOCAL_ADDR" != "common" ];then
 fi
 
 if [ -f /etc/motd ];then
-    echo "welcome to mdserver-web panel" > /etc/motd
+    echo "welcome to PowerLinux panel" > /etc/motd
 fi
 
 startTime=`date +%s`
@@ -234,12 +237,13 @@ if [ $OSNAME != "macos" ];then
 	mkdir -p /www/backup/site
 
 	if [ ! -d /www/server/mdserver-web ];then
-		echo "downloading ${HTTP_PREFIX}github.com/midoks/mdserver-web/archive/refs/heads/dev.tar.gz"
-		curl --insecure -sSLo /tmp/dev.tar.gz ${HTTP_PREFIX}github.com/midoks/mdserver-web/archive/refs/heads/dev.tar.gz
+		echo "downloading ${HTTP_PREFIX}github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/${REPO_BRANCH}.tar.gz"
+		curl --insecure -sSLo /tmp/dev.tar.gz ${HTTP_PREFIX}github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/${REPO_BRANCH}.tar.gz
+		TARBALL_DIR=$(tar -tf /tmp/dev.tar.gz | head -1 | cut -d/ -f1)
 		cd /tmp && tar -zxvf /tmp/dev.tar.gz
-		mv -f /tmp/mdserver-web-dev /www/server/mdserver-web
+		mv -f /tmp/${TARBALL_DIR} /www/server/mdserver-web
 		rm -rf /tmp/dev.tar.gz
-		rm -rf /tmp/mdserver-web-dev
+		rm -rf /tmp/${TARBALL_DIR}
 	fi
 
 	# install acme.sh
@@ -258,7 +262,7 @@ fi
 echo "use system version: ${OSNAME}"
 
 if [ "${OSNAME}" == "macos" ];then
-	curl --insecure -fsSL ${HTTP_PREFIX}raw.githubusercontent.com/midoks/mdserver-web/refs/heads/dev/scripts/install/macos.sh | bash
+	curl --insecure -fsSL ${HTTP_PREFIX}raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/scripts/install/macos.sh | bash
 else
 	cd /www/server/mdserver-web && bash scripts/install/${OSNAME}.sh
 fi

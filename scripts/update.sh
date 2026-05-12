@@ -5,7 +5,7 @@ export PATH
 is64bit=`getconf LONG_BIT`
 REPO_OWNER="AndyXeCM"
 REPO_NAME="PowerLinux"
-REPO_BRANCH="master"
+REPO_BRANCH="main"
 
 startTime=`date +%s`
 

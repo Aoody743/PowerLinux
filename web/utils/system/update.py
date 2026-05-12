@@ -15,8 +15,85 @@ import time
 import math
 import psutil
 import json
+import html
 
 import core.mw as mw
+
+PANEL_REPO_OWNER = 'AndyXeCM'
+PANEL_REPO_NAME = 'PowerLinux'
+PANEL_RELEASE_API = 'https://api.github.com/repos/%s/%s/releases/latest' % (PANEL_REPO_OWNER, PANEL_REPO_NAME)
+PANEL_RELEASE_PAGE = 'https://github.com/%s/%s/releases/latest' % (PANEL_REPO_OWNER, PANEL_REPO_NAME)
+
+
+def _normalize_version_name(version):
+    version = str(version or '').strip()
+    if version.startswith('v') and len(version) > 1 and version[1].isdigit():
+        version = version[1:]
+    return version
+
+
+def _strip_html_tags(content):
+    content = re.sub(r'(?i)<br\s*/?>', '\n', content)
+    content = re.sub(r'(?i)</p\s*>', '\n\n', content)
+    content = re.sub(r'(?i)</div\s*>', '\n', content)
+    content = re.sub(r'(?i)</li\s*>', '\n', content)
+    content = re.sub(r'(?i)<li[^>]*>', ' - ', content)
+    content = re.sub(r'<[^>]+>', '', content)
+    return html.unescape(content).strip()
+
+
+def _parse_release_page(result):
+    tag_name = ''
+    release_name = ''
+
+    title_match = re.search(r'<title>(.*?)</title>', result, re.S | re.I)
+    if title_match is not None:
+        title = title_match.group(1)
+        title = re.sub(r'\s*·\s*[^<]+$', '', title).strip()
+        title = re.sub(r'(?i)^release\s+', '', title).strip()
+        if title != '':
+            release_name = title
+            version_match = re.search(r'(\d+(?:\.\d+)+)\s*$', release_name)
+            if version_match is not None:
+                tag_name = version_match.group(1)
+
+    if tag_name == '':
+        tag_candidates = re.findall(r'/[^/]+/[^/]+/releases/tag/([^"\'?#/]+)', result)
+        for candidate in tag_candidates:
+            candidate = _normalize_version_name(candidate)
+            if re.match(r'^\d+(?:\.\d+)+$', candidate) is not None:
+                tag_name = candidate
+                break
+
+    if release_name == '':
+        release_name = tag_name
+
+    if tag_name == '':
+        return None
+
+    body_match = re.search(r'<div[^>]+class="[^"]*markdown-body[^"]*"[^>]*>(.*?)</div>', result, re.S | re.I)
+    body = ''
+    if body_match is not None:
+        body = _strip_html_tags(body_match.group(1))
+
+    return {
+        'tag_name': tag_name,
+        'name': release_name,
+        'body': body,
+        'html_url': 'https://github.com/%s/%s/releases/tag/%s' % (PANEL_REPO_OWNER, PANEL_REPO_NAME, tag_name),
+    }
+
+
+def _release_version(version_new_info):
+    version = _normalize_version_name(version_new_info.get('tag_name', ''))
+    if version == '':
+        version = _normalize_version_name(version_new_info.get('version', ''))
+    if version == '':
+        version = _normalize_version_name(version_new_info.get('name', ''))
+        match = re.search(r'(\d+(?:\.\d+)+)', version)
+        if match is not None:
+            version = match.group(1)
+    return version
 
 def versionDiff(now, new):
     '''
@@ -24,6 +101,11 @@ def versionDiff(now, new):
         new 有新版本
         none 没有新版本
     '''
+    now = _normalize_version_name(now)
+    new = _normalize_version_name(new)
+    if now == '' or new == '':
+        return 'none'
+
     new_list = new.split('.')
     if len(new_list) > 3:
         return 'test'
@@ -39,16 +121,34 @@ def versionDiff(now, new):
 def getServerInfo():
     import urllib.request
     import ssl
-    upAddr = 'https://api.github.com/repos/midoks/mdserver-web/releases/latest'
+    headers = {
+        'User-Agent': 'PowerLinux-Updater/1.0',
+        'Accept': 'application/vnd.github+json',
+    }
+    upAddrList = [PANEL_RELEASE_API, PANEL_RELEASE_PAGE]
+    last_error = None
     try:
         context = ssl._create_unverified_context()
-        req = urllib.request.urlopen(upAddr, context=context, timeout=3)
-        result = req.read().decode('utf-8')
-        version = json.loads(result)
-        return version
+        for upAddr in upAddrList:
+            try:
+                req = urllib.request.Request(upAddr, headers=headers)
+                resp = urllib.request.urlopen(req, context=context, timeout=5)
+                result = resp.read().decode('utf-8')
+                if upAddr == PANEL_RELEASE_API:
+                    version = json.loads(result)
+                    if isinstance(version, dict) and version.get('tag_name'):
+                        return version
+                else:
+                    version = _parse_release_page(result)
+                    if version is not None:
+                        return version
+            except Exception as e:
+                last_error = e
     except Exception as e:
         print(str(e))
         return None
+    if last_error is not None:
+        print(str(last_error))
     return None
 
 def updateServer(stype, version=''):
@@ -62,8 +162,8 @@ def updateServer(stype, version=''):
         if version_new_info is None:
             return mw.returnData(False, '服务器数据或网络有问题!')
 
-        version_now = config.APP_VERSION
-        new_ver = version_new_info['name']
+        version_now = _normalize_version_name(config.APP_VERSION)
+        new_ver = _release_version(version_new_info)
         if stype == 'check':
             diff = versionDiff(version_now, new_ver)
             if diff == 'new':
@@ -77,7 +177,10 @@ def updateServer(stype, version=''):
             diff = versionDiff(version_now, new_ver)
             data = {}
             data['version'] = new_ver
-            data['content'] = version_new_info['body'].replace("\n", "<br/>")
+            content = str(version_new_info.get('body', ''))
+            if content.strip() == '':
+                content = '当前版本来自 GitHub Release，未提供更新说明。'
+            data['content'] = content.replace("\n", "<br/>")
             return mw.returnData(True, '更新信息!', data)
 
         if stype == 'update':
@@ -91,20 +194,21 @@ def updateServer(stype, version=''):
             if not os.path.exists(toPath):
                 mw.execShell('mkdir -p ' + toPath)
 
-            newUrl = "https://github.com/midoks/mdserver-web/archive/refs/tags/" + version + ".zip"
+            version = _normalize_version_name(version)
+            newUrl = "https://github.com/%s/%s/archive/refs/tags/%s.zip" % (PANEL_REPO_OWNER, PANEL_REPO_NAME, version)
 
             dist_mw = toPath + '/mw.zip'
             if not os.path.exists(dist_mw):
                 mw.execShell('wget --no-check-certificate -O ' + dist_mw + ' ' + newUrl)
 
-            dist_to = toPath + "/mdserver-web-" + version
+            dist_to = toPath + "/PowerLinux-" + version
             if not os.path.exists(dist_to):
                 os.system('unzip -o ' + toPath + '/mw.zip' + ' -d ' + toPath)
 
-            cmd_cp = 'cp -rf ' + toPath + '/mdserver-web-' + version + '/* ' + mw.getServerDir() + '/mdserver-web'
+            cmd_cp = 'cp -rf ' + toPath + '/PowerLinux-' + version + '/* ' + mw.getServerDir() + '/mdserver-web'
             mw.execShell(cmd_cp)
 
-            mw.execShell('rm -rf ' + toPath + '/mdserver-web-' + version)
+            mw.execShell('rm -rf ' + toPath + '/PowerLinux-' + version)
             mw.execShell('rm -rf ' + toPath + '/mw.zip')
 
             update_env = '''
@@ -144,7 +248,4 @@ fi
     except Exception as ex:
         # print('updateServer', ex)
         return mw.returnData(False, "连接服务器失败!" + str(ex))
-
-
-
 

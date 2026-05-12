@@ -5,6 +5,9 @@ LANG=en_US.UTF-8
 
 USER=$(who | sed -n "2,1p" |awk '{print $1}')
 DEV="/Users/${USER}/Desktop/mwdev"
+REPO_OWNER="AndyXeCM"
+REPO_NAME="PowerLinux"
+REPO_BRANCH="main"
 
 
 mkdir -p $DEV
@@ -31,11 +34,12 @@ brew install pcre2 libxpm libelf
 brew install automake icu4c libmemcached
 
 if [ ! -d $DEV/server/mdserver-web ]; then
-	wget -O /tmp/master.zip https://codeload.github.com/midoks/mdserver-web/zip/master
+	wget -O /tmp/master.zip https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/${REPO_BRANCH}
+	TARBALL_DIR=$(unzip -Z1 /tmp/master.zip | head -1 | cut -d/ -f1)
 	cd /tmp && unzip /tmp/master.zip
-	mv /tmp/mdserver-web-master $DEV/server/mdserver-web
+	mv /tmp/${TARBALL_DIR} $DEV/server/mdserver-web
 	rm -f /tmp/master.zip
-	rm -rf /tmp/mdserver-web-master
+	rm -rf /tmp/${TARBALL_DIR}
 fi
 
 if [ ! -d $DEV/server/lib ]; then

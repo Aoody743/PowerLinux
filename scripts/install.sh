@@ -15,7 +15,7 @@ ERROR='[\033[31mERROR\033[0m]'
 WORKING='[\033[34m*\033[0m]'
 REPO_OWNER="AndyXeCM"
 REPO_NAME="PowerLinux"
-REPO_BRANCH="master"
+REPO_BRANCH="main"
 
 
 # LANG=en_US.UTF-8
@@ -152,7 +152,7 @@ if [ "$LOCAL_ADDR" != "common" ];then
 fi
 
 if [ -f /etc/motd ];then
-    echo "welcome to mdserver-web panel" > /etc/motd
+    echo "welcome to PowerLinux panel" > /etc/motd
 fi
 
 startTime=`date +%s`

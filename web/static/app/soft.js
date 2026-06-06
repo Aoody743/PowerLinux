@@ -184,14 +184,15 @@ function getSList(isdisplay) {
                 plugin_title = plugin.title + ' ' + plugin.setup_version;
             }
 
-            icon_link = "/plugins/file?name="+plugin.name+"&f=ico.png";
-            if (plugin.icon != ''){
-                icon_link = "/plugins/file?name="+plugin.name+"&f="+plugin.icon;
+            var iconLink = "/plugins/file?name=" + plugin.name + "&f=ico.png";
+            if (plugin.icon) {
+                iconLink = "/plugins/file?name=" + plugin.name + "&f=" + plugin.icon;
             }
 
             sBody += '<tr>' +
-                '<td><span ' + titleClick + '>'+
-                '<img data-src="'+icon_link+'" src="/static/img/loading.gif">' + plugin_title + '</span></td>' +
+                '<td><span class="mw-soft-plugin-name" ' + titleClick + '>' +
+                '<span class="mw-soft-plugin-icon"><img data-src="' + iconLink + '" src="/static/img/loading.gif" alt="' + escapeHtml(plugin_title) + '"></span>' +
+                '<span class="mw-soft-plugin-title">' + plugin_title + '</span></span></td>' +
                 '<td>' + plugin.ps + '</td>' +
                 '<td>' + softPath + '</td>' +
                 '<td>' + state + '</td>' +

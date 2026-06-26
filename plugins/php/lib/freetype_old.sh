@@ -12,19 +12,25 @@ rootPath=$(dirname "$rootPath")
 
 SERVER_ROOT=$rootPath/lib
 SOURCE_ROOT=$rootPath/source/lib
+FREETYPE_VERSION=2.7.1
+FREETYPE_FILE=freetype-${FREETYPE_VERSION}.tar.bz2
+FREETYPE_SHA256=3a3bb2c4e15ffb433f2032f50a5b5a92558206822e22bfe8cbe339af4aa82f88
+FREETYPE_URL=https://download.savannah.gnu.org/releases/freetype/${FREETYPE_FILE}
 
 if [ ! -d ${SERVER_ROOT}/freetype_old ];then
-    cd $SOURCE_ROOT
+    cd "$SOURCE_ROOT" || exit 1
 
-    if [ ! -f $SOURCE_ROOT/freetype-2.7.1.tar.gz ];then
-        wget -O freetype-2.7.1.tar.gz --no-check-certificate https://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz  -T 5
+    if [ ! -f "$SOURCE_ROOT/$FREETYPE_FILE" ];then
+        wget -O "$FREETYPE_FILE" "$FREETYPE_URL" -T 5
     fi
 
-    if [ ! -d $SOURCE_ROOT/freetype-2.7.1 ];then
-        tar zxvf freetype-2.7.1.tar.gz
-        cd freetype-2.7.1
+    echo "${FREETYPE_SHA256}  ${FREETYPE_FILE}" | sha256sum -c - || exit 1
+
+    if [ ! -d "$SOURCE_ROOT/freetype-${FREETYPE_VERSION}" ];then
+        tar jxvf "$FREETYPE_FILE"
+        cd "freetype-${FREETYPE_VERSION}"
     else
-        cd freetype-2.7.1
+        cd "freetype-${FREETYPE_VERSION}"
     fi
     
     ./configure --prefix=${SERVER_ROOT}/freetype_old && make && make install

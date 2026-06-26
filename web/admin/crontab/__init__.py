@@ -67,6 +67,7 @@ def get_data_list():
 
 # 获取计划任务
 @blueprint.route('/get_crond_find', endpoint='get_crond_find', methods=['POST'])
+@panel_login_required
 def get_crond_find():
     cron_id = request.form.get('id', '')
     data = MwCrontab.instance().getCrondFind(cron_id)
@@ -74,6 +75,7 @@ def get_crond_find():
 
 # 修改计划任务
 @blueprint.route('/modify_crond', endpoint='modify_crond', methods=['POST'])
+@panel_login_required
 def modify_crond():
     request_data = {}
     
@@ -96,6 +98,7 @@ def modify_crond():
 
 # 执行计划任务
 @blueprint.route('/start_task', endpoint='start_task', methods=['POST'])
+@panel_login_required
 def start_task():
     cron_id = request.form.get('id', '')
     return MwCrontab.instance().startTask(cron_id)
@@ -127,5 +130,4 @@ def add():
     if cron_id > 0:
         return mw.returnData(True, '添加成功')
     return mw.returnData(False, '添加失败')
-
 
